@@ -5,18 +5,8 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="79528cf0-5ba6-4411-a153-43decf426f0d" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/requirements.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pipeline.py" beforeDir="false" afterPath="$PROJECT_DIR$/pipeline.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/scripts/Handeling_Unbalanced_Combine_ML.py" beforeDir="false" afterPath="$PROJECT_DIR$/scripts/Handling_Unbalanced_Combine_ML.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/scripts/Handeling_Unbalanced_SMOTE_ML.py" beforeDir="false" afterPath="$PROJECT_DIR$/scripts/Handling_Unbalanced_SMOTE_ML.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/scripts/deep_learning.py" beforeDir="false" afterPath="$PROJECT_DIR$/scripts/deep_learning.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/scripts/evaluation.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/scripts/machine_learning.py" beforeDir="false" afterPath="$PROJECT_DIR$/scripts/machine_learning.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/scripts/rule_based.py" beforeDir="false" afterPath="$PROJECT_DIR$/scripts/rule_based.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/scripts/temp.py" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
