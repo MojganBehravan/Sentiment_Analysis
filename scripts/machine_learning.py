@@ -1,6 +1,7 @@
 import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.feature_extraction.text import TfidfVectorizer
+import time
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.metrics import classification_report, accuracy_score
 from scripts.preprocessing import preprocess_data,preprocess_naive_bayes_without_pca, preprocess_and_split,preprocess_naive_bayes_with_pca
@@ -15,6 +16,7 @@ data = preprocess_data(data)
 output_files = preprocess_and_split(data)
 
 # === Step 3: Load Preprocessed Train/Test Data ===
+train_start = time.time()
 train_file = output_files['train_file']
 test_file = output_files['test_file']
 
@@ -27,6 +29,7 @@ X_test, Y_test = test_data['Text'], test_data['Label']
 
 print(f"Training set size: {len(X_train)}")
 print(f"Test set size: {len(X_test)}")
+# End training time
 
 
 # Preprocess data for Naïve Bayes without PCA
@@ -36,14 +39,22 @@ print('End of Naïve Bayes preprocessing')
 # Train and evaluate Naïve Bayes model
 nb_model = MultinomialNB()
 nb_model.fit(X_train_nb, Y_train)
+train_end = time.time()
+train_time = train_end - train_start
 
 # Predict on test data
+# Start processing time
+process_start = time.time()
 Y_test_pred = nb_model.predict(X_test_nb)
 
 # Evaluate on training set
 Y_train_pred = nb_model.predict(X_train_nb)
 train_accuracy = accuracy_score(Y_train, Y_train_pred)
 print("Training Accuracy:", train_accuracy)
+process_end = time.time()
+process_time = process_end - process_start
+print(f"Naïve Bayes Training Time: {train_time:.2f} seconds")
+print(f"Naïve Bayes Processing Time: {process_time:.2f} seconds")
 
 # Evaluate model
 test_accuracy = accuracy_score(Y_test, Y_test_pred)
@@ -60,6 +71,7 @@ X_train_pca, X_test_pca, tfidf_pca, pca = preprocess_naive_bayes_with_pca(X_trai
  #Train and evaluate Naïve Bayes model (with PCA)
 nb_model_with_pca = MultinomialNB()
 nb_model_with_pca.fit(X_train_pca, Y_train)
+
 
 # Predict on test data
 Y_test_pred_pca = nb_model_with_pca.predict(X_test_pca)
