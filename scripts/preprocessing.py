@@ -11,9 +11,9 @@ from sklearn.model_selection import train_test_split
 
 
 # Download NLTK resources
-nltk.download('stopwords')
-nltk.download('punkt_tab')
-nltk.download('punkt')
+#nltk.download('stopwords')
+#nltk.download('punkt_tab')
+#nltk.download('punkt')
 
 # Define shared text cleaning function
 def clean_text(text):
