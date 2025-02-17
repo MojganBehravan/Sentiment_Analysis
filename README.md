@@ -2,9 +2,10 @@
 
 This project performs sentiment analysis on the **Amazon Fine Food Reviews** dataset using different models:
 
+- 
 - **Rule-Based Model (VADER)**
-- **Traditional Machine Learning (Naïve Bayes)**
-- **Deep Learning Models (LSTM with Attention & BERT)**
+- **Traditional Machine Learning (Naïve Bayes) and XGboost**
+- **Deep Learning Models (LSTM & BERT)**
 
 The pipeline allows separate execution of each script, enabling modular testing of each method.
 
@@ -69,7 +70,16 @@ python scripts/preprocessing.py
   ```bash
   python scripts/deep_learning.py
   ```
-
+## For evaluating sarcasam:
+### 1️⃣ fetch sarcastic reviews from dataset
+```bash
+python scripts/sarcastic_reviews.py
+```
+### 2️⃣ Run evaluation sarcasam report
+```bash
+python scripts/evaluate_sarcsam.py
+```
+- load VADER, Naive, XGboost model and evaluate the misclassification rate.
 ### 🔹 **Recommended for LSTM & BERT**
 **It is highly recommended to run LSTM with Attention (Deep Learning) and BERT on Kaggle Notebook or Google Colab** for better performance.
 
@@ -77,5 +87,6 @@ python scripts/preprocessing.py
 
 🔗 [Amazon Fine Food Reviews (LSTM Model)](https://www.kaggle.com/code/mojganb/amazon-fine-food-lstm)  
 🔗 [Fine Food Sentiment Analysis (BERT Model)](https://www.kaggle.com/code/mojganb/amazon-fine-food-bert)
+
 
 ---
