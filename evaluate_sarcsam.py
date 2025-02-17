@@ -1,12 +1,13 @@
+import joblib
 import pandas as pd
 import numpy as np
 from sklearn.metrics import classification_report, confusion_matrix
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
-from transformers import pipeline
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.utils.class_weight import compute_class_weight
-from transformers import AutoTokenizer
+
+
 
 # Ensure Pandas shows all columns
 pd.set_option('display.max_columns', None)
@@ -34,7 +35,6 @@ model_results.append({
     "Misclassification Rate": round((1 - vader_report["accuracy"]) * 100, 2)
 })
 
-
 # ============== Naïve Bayes Sentiment Analysis =====================
 # Convert text data into TF-IDF vectors
 vectorizer = TfidfVectorizer()
@@ -59,90 +59,63 @@ model_results.append({
     "Detected as Negative (%)": (1 - sum(y_pred_nb) / len(y_pred_nb)) * 100,
     "Misclassification Rate": round((1 - nb_report["accuracy"]) * 100, 2)
 })
+# ======== Load Saved XGBoost Model and Vectorizer ========
+xgb_vectorizer = joblib.load("data/xgboost_tfidf_vectorizer_tune.pkl")
+xgb_model = joblib.load("data/xgboost_sentiment_model_tune.pkl")
+#Transform Sarcastic Reviews Using TF-IDF
+X_tfidf_xgb = xgb_vectorizer.transform(X_texts)
+# Get XGBoost Predictions
+y_pred_xgb = xgb_model.predict(X_tfidf_xgb)
 
-# ============================= LSTM Sentiment Analysis =====================
-# Load tokenizer to check token length
-tokenizer = AutoTokenizer.from_pretrained("distilbert-base-uncased")
+#  Ignore neutral (1) by filtering out those instances
+mask = (y_true != 1)  # Keep only positive (2) and negative (0) reviews
+y_true_filtered = y_true[mask]
+y_pred_xgb_filtered = y_pred_xgb[mask]
 
+#  Convert to binary classification (0 = Negative, 2 → 1 = Positive)
+y_true_binary = np.where(y_true_filtered == 2, 1, 0)
+y_pred_xgb_binary = np.where(y_pred_xgb_filtered == 2, 1, 0)
 
-def safe_predict(text, model_pipeline, tokenizer):
-    """Truncate text properly before passing it to the model"""
-    encoded = tokenizer(text, truncation=True, max_length=512)
+# Evaluate XGBoost Performance
+xgb_report = classification_report(y_true_binary, y_pred_xgb_binary, output_dict=True)
+print(classification_report(y_true_binary, y_pred_xgb_binary, zero_division=0))
 
-    # Extract the truncated text (reconstruct from tokens)
-    truncated_text = tokenizer.decode(encoded["input_ids"], skip_special_tokens=True)
+# Compute statistics
+total_samples = len(y_pred_xgb_binary)
+positive_percent = (np.count_nonzero(y_pred_xgb_binary == 1) / total_samples) * 100
+negative_percent = (np.count_nonzero(y_pred_xgb_binary == 0) / total_samples) * 100
+misclassification_rate = round((1 - xgb_report["accuracy"]) * 100, 2)
 
-    # Pass truncated text to the pipeline
-    return model_pipeline(truncated_text)[0]['label']
-
-
-lstm_sentiment = pipeline("sentiment-analysis", model="distilbert-base-uncased-finetuned-sst-2-english")
-
-# Apply safe predictions
-y_pred_lstm = [1 if safe_predict(text, lstm_sentiment, tokenizer) == "POSITIVE" else 0 for text in X_texts]
-
-lstm_report = classification_report(y_true, y_pred_lstm, output_dict=True)
-print(classification_report(y_true, y_pred_lstm, output_dict=True))
-# Append results dynamically
+# Store results dynamically
 model_results.append({
-    "Model": "LSTM",
-    "Detected as Positive (%)": sum(y_pred_lstm) / len(y_pred_lstm) * 100,
-    "Detected as Negative (%)": (1 - sum(y_pred_lstm) / len(y_pred_lstm)) * 100,
-    "Misclassification Rate": round((1 - lstm_report["accuracy"]) * 100, 2)
+    "Model": "XGBoost",
+    "Detected as Positive (%)": positive_percent,
+    "Detected as Negative (%)": negative_percent,
+    "Misclassification Rate": misclassification_rate
 })
 
-# ============================= BERT Sentiment Analysis =====================
-bert_sentiment = pipeline("sentiment-analysis", model="nlptown/bert-base-multilingual-uncased-sentiment")
-
-def safe_predict_bert(text, model_pipeline, tokenizer):
-    """Ensures text does not exceed 512 tokens before passing to the BERT model."""
-
-    # Tokenize input and enforce truncation
-    encoded = tokenizer(text, truncation=True, max_length=512, return_tensors="pt")
-
-    # Extract tokenized input (ensure it's properly formatted)
-    model_input = tokenizer.batch_decode(encoded["input_ids"], skip_special_tokens=True)[0]
-
-    # Pass truncated input to the model
-    return model_pipeline(model_input, truncation=True)[0]['label']
-
-
-# Apply safe predictions
-y_pred_bert = [1 if any(star in safe_predict_bert(text, bert_sentiment, tokenizer) for star in ["4", "5"]) else 0 for
-               text in X_texts]
-
-bert_report = classification_report(y_true, y_pred_bert, output_dict=True)
-print(classification_report(y_true, y_pred_bert, output_dict=True))
-# Append results dynamically
-model_results.append({
-    "Model": "BERT",
-    "Detected as Positive (%)": sum(y_pred_bert) / len(y_pred_bert) * 100,
-    "Detected as Negative (%)": (1 - sum(y_pred_bert) / len(y_pred_bert)) * 100,
-    "Misclassification Rate": round((1 - bert_report["accuracy"]) * 100, 2)
-})
 
 # ============================= Misclassification Calculation Using Confusion Matrix =====================
 def calculate_metrics(y_pred, y_true):
-    tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()
+    cm = confusion_matrix(y_true, y_pred)
+    total_instances = cm.sum()
+    correct_predictions = cm.diagonal().sum()  # Sum of correct predictions (diagonal elements)
+    misclassified_instances = total_instances - correct_predictions  # Everything else is misclassified
 
-    detected_positive = (tp + fp) / (tp + fp + tn + fn) * 100  # Total times model predicted positive
-    detected_negative = (tn + fn) / (tp + fp + tn + fn) * 100  # Total times model predicted negative
-    misclassification_rate = (fp + fn) / (tp + fp + tn + fn) * 100  # Incorrect predictions
+    detected_positive = (sum(cm[:, 1]) / total_instances) * 100 if cm.shape[1] > 1 else (sum(y_pred) / len(
+        y_pred)) * 100
+    detected_negative = (sum(cm[:, 0]) / total_instances) * 100 if cm.shape[1] > 1 else (1 - sum(y_pred) / len(
+        y_pred)) * 100
+    misclassification_rate = (misclassified_instances / total_instances) * 100
 
     return round(detected_positive, 2), round(detected_negative, 2), round(misclassification_rate, 2)
 
 
 # Apply confusion matrix metrics
-for model_name, y_pred in zip(["VADER", "Naïve Bayes", "LSTM", "BERT"],
-                              [y_pred_vader, y_pred_nb, y_pred_lstm, y_pred_bert]):
+for model_name, y_pred in zip(["VADER", "Naïve Bayes", "XGboost"],
+                              [y_pred_vader, y_pred_nb,y_pred_xgb]):
     detected_positive, detected_negative, misclassification_rate = calculate_metrics(y_pred, y_true)
 
-    model_results.append({
-        "Model": model_name,
-        "Detected as Positive (%)": detected_positive,
-        "Detected as Negative (%)": detected_negative,
-        "Misclassification Rate": misclassification_rate
-    })
 
 # Convert results to DataFrame
 df_misclassification = pd.DataFrame(model_results)
