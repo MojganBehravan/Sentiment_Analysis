@@ -4,7 +4,8 @@ This project performs sentiment analysis on the **Amazon Fine Food Reviews** dat
 
 - 
 - **Rule-Based Model (VADER)**
-- **Traditional Machine Learning (Naïve Bayes) and XGboost**
+- **Traditional Machine Learning (Naïve Bayes)**
+- **Ensemble Learning Models: XGBoost**
 - **Deep Learning Models (LSTM & BERT)**
 
 The pipeline allows separate execution of each script, enabling modular testing of each method.
